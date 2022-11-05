@@ -1,0 +1,137 @@
+https://archlinux.org/download/  
+  Download ISO from mit.edu 
+  Download archlinux-2022.11.01-x86_64.iso 
+  Use 7ZIP to calculate SHA > 7ZIP > CRC SHA > SHA-256 and see that it is a matching checksum
+Open VMware Workstation 
+  Click “Create a New Virtual Machine” 
+New Virtual Machine Wizard opens. 
+  Select Custom (advanced) option  
+  Leave options as they are (Hardware compatibility: Workstation 16.2.x) 
+  Select Installer disk image file (iso): 
+  Browse 
+    Select archlinux-2022.11.01-x86_64.iso 
+  Guest Operating System should be Linux 
+  Version should be “Other Linux 5.x kernel 64-bit" 
+  Virtual Machine name will be “Arch Linux5” since it is the fifth Arch Linux VM to be created for this project. 
+  Number of processors: 1 
+  Number of cores per processor: 2 
+  Memory for this virtual machine: 2048 MB 
+  Use network address translation (NAT) for network connection 
+  Use LSI Logic for SCSI controller 
+  Use SCSI for Virtual Disk type 
+  Create a new virtual disk 
+  Maximum disk size (GB): 20.0 
+  Store virtual disk as a single file 
+  Leave disk file as Arch Linux5.vmdk 
+  Finish 
+Right click Arch Linux5 
+Open VM Directory 
+  Open Arch Linux5.vmx with notepad 
+    On the second line of the Arch Linux5.vmx file type firmware="efi" 
+    Save and exit 
+Power on Arch Linux5 
+  Press enter while selecting Arch Linux install medium (x86_64, UEFI) 
+  Wait for the install medium to complete 
+Implementing Arch Linux 
+  # ip link (to make sure your internet is working) 
+  # timedatectl set-ntp true (sync time) 
+  Begin Partitioning 
+    cfdisk /dev/sda 
+    Choose dos 
+    Create /dev/sda1 with 128M, primary 
+    Select /dev/sda1 as boot 
+    Create /dev/sda2 with remaining space, primary 
+    Select Write 
+    Type: Yes 
+    Select Quit 
+    # mkfs.fat -F32 /dev/sda1 
+    # mkfs.ext4 /dev/sda2 
+    # mount /dev/sda2 /mnt 
+    # mkdir /mnt/boot 
+    # mkdir /mnt/boot/efi 
+    # mount /dev/sda1 /mnt/boot/efi 
+  # pacstrap /mnt base base-devel linux linux-firmware vim 
+  Fstab 
+    # genfstab /mnt 
+    # genfstab –U /mnt >> /mnt/etc/fstab - so it uses the UUID 
+    # genfstab –U /mnt - to view the new fstab 
+  Chroot  
+    # arch-chroot /mnt /bin/bash 
+    !! Do not exit chroot until instructed to !! 
+  Time Zone 
+    ln –sf /usr/share/zoneinfo/[Insert your zone here]/[Insert your city here] /etc/localtime 
+      For example if you lived in American, Tulsa you would type: 
+      ln –sf /usr/share/zoneinfo/America/Tulsa /etc/localtime 
+    In this case, type: ln –sf /usr/share/zoneinfo/America/Tulsa /etc/localtime 
+  Localization 
+    vim /etc/locale.gen 
+    search en_US, specifically type /en_US and it will highlight the nearest match 
+    uncomment (remove # from the front of) “en_US.UTF-8 UTF-8 “ and “en_US ISO-8859-1" 
+    once done, press the ESC button on your keyboard 
+    press the shift button and : button on your keyboard at the same time 
+    type wq to exit 
+    # locale-gen 
+    # vim /etc/locale.conf 
+    type LANG=en_US.UTF-8 (if there is something on the top line the replace it with what you have been instructed to type in this step) 
+    press shift + : 
+    type wq 
+  Root password 
+    # passwd 
+    Make the root password whatever you want. To be completely honest, there is only one password I can remember so I can’t trust myself to use any other without forgetting. For the sake of security I need to omit it.
+  Network Configuration and Boot Loader 
+    # vim /etc/hostname 
+        You may have a name already stored in hostname, maybe archiso. If so, you can leave it like that or change it to whatever name you want. 
+        Type archhost 
+        Press ESC on keyboard 
+        Press Shift + : on keyboard 
+        Type wq 
+    Type arch-chroot /mnt /bin/bash again if you are in the root now and not chroot 
+      # pacman –S networkmanager grub 
+      Y 
+      # systemctl enable NetworkManager 
+      # pacman –S efibootmgr 
+      Y 
+      # grub-install /dev/sda 
+      # grub-mkconfig –o /boot/grub/grub.cfg 
+  Reboot 
+  # exit 
+  # umount –R /mnt 
+  # reboot 
+  The root user is now loginable 
+  Arch login: root 
+  Password: Whatever password you decided on not my password because that is a secret 
+  
+  Installing gnome – Starts when logging into root 
+    # sudo pacman –Syu 
+    # sudo pacman –S xorg gnome gnome-extra gdm 
+    Accept all installations 
+    Reboot 
+    Launch from Arch Linux 
+  Creating two user accounts: 
+    one for Ian. Sudo permissions. 
+    Activities > search “Users” > Settings: Add or remove users and change your password > Add User... > Name: ian > Administrator: Yes > Password: Set Password Now > Password: Q!2W@3E#4R$5 > Add 
+    one for Codi. Sudo permissions. 
+      Activities > search “Users” > Settings: Add or remove users and change your password > Add User... > Name: codi > Administrator: Yes > Password: Set Password Now > Password: Gracehopper1906 > Set Password back to User Sets Password On First Login, it will keep the GraceHopper1906 password intact. 
+        Codi username and password must be changed after first login. 
+        password: Gracehopper1906 
+  Install a shell that is not bash. Potentially zsh or fish: 
+    Open the terminal in the VM. 
+      # pacman –S zsh (installs zsh) 
+        # whereis zsh (locates zsh) 
+        # chsh –s /usr/bin/zsh root (changes the shell from bash to zsh) 
+        Restart the VM and come back 
+        # echo “$SHELL” (shows the Shell type) 
+   Add color coding to terminal 
+      Open the terminal in GNOME > Click the button with three horizontal lines, this is the options button > Click preferences > Click Unnamed, or whatever is underneath Profiles + > Navigate to Colors > Disable Use Colors from system theme > You can use whatever options you want, I chose dark gray on parchment.
+   
+   Set the system to boot into the GUI desktop environment. 
+      By this stage selecting Arch Linux should automatically load the GNOME login screen. 
+      
+   Add a few aliases to .bashrc or .zshrc.
+      In terminal: # vim ~/.zshrc 
+          Type: alias ls=’ls --color=auto’. (It colorizes ls output) 
+          Type: alias ll=’ls -la’ (Use a long listing format) 
+          Type: alias l.=’ls -d .* --color=auto’ (Show hidden files) 
+          Type: alias bc=’bc -l’ (Start calculator with math support) 
+  
+  Done
